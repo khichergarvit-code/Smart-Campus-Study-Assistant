@@ -1,0 +1,6 @@
+# Only for the terminal voice mode (python main.py --voice).
+# The web UI does NOT need these - it uses the browser for voice.
+# On Windows, if pyaudio fails to install, run:  pip install pipwin  then  pipwin install pyaudio
+pyttsx3
+SpeechRecognition
+pyaudio

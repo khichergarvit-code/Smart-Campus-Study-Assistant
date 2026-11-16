@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Campus Assistant</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --panel: #ffffff; --text: #1d2433; --muted: #6b7488;
+    --line: #e3e7f0; --brand: #4f46e5; --brand-2: #7c3aed; --user: #4f46e5;
+    --bot: #eef0f8; --code: #0f172a; --code-text: #d6e2ff; --chip: #eef0ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1220; --panel: #161b2e; --text: #e8ecf8; --muted: #8e98b4;
+      --line: #262d47; --bot: #1f2640; --code: #090c18; --chip: #222a4a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; justify-content: center;
+  }
+  .app {
+    width: 100%; max-width: 920px; height: 100%;
+    display: flex; flex-direction: column; padding: 0 16px;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 18px 0 12px;
+  }
+  .logo {
+    width: 42px; height: 42px; border-radius: 12px; flex: none;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    display: grid; place-items: center; color: #fff; font-size: 22px;
+  }
+  header h1 { font-size: 18px; margin: 0; }
+  header p { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
+  .spacer { flex: 1; }
+  .icon-btn {
+    border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    border-radius: 10px; padding: 8px 12px; font-size: 13px; cursor: pointer;
+  }
+  .icon-btn.on { border-color: var(--brand); color: var(--brand); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 12px; }
+  .chip {
+    border: 0; background: var(--chip); color: var(--brand);
+    padding: 7px 12px; border-radius: 999px; font-size: 13px; cursor: pointer;
+  }
+  .chip:hover { filter: brightness(0.96); }
+  #chat {
+    flex: 1; overflow-y: auto; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 16px; padding: 18px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .msg { max-width: 82%; padding: 10px 14px; border-radius: 14px; line-height: 1.5;
+         font-size: 14.5px; white-space: pre-wrap; word-wrap: break-word; }
+  .msg.user { align-self: flex-end; background: var(--user); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.bot { align-self: flex-start; background: var(--bot); border-bottom-left-radius: 4px; }
+  .badge {
+    align-self: flex-start; font-size: 11.5px; color: var(--muted);
+    display: flex; gap: 6px; align-items: center; margin-top: 4px;
+  }
+  .badge b { color: var(--brand); font-weight: 600; }
+  pre.block {
+    align-self: stretch; margin: 0; background: var(--code); color: var(--code-text);
+    padding: 12px 14px; border-radius: 12px; font-size: 12.5px; overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; line-height: 1.5;
+  }
+  .typing { color: var(--muted); font-size: 13px; align-self: flex-start; }
+  form { display: flex; gap: 8px; padding: 12px 0 16px; }
+  input[type=text] {
+    flex: 1; padding: 13px 16px; border-radius: 12px; font-size: 15px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text); outline: none;
+  }
+  input[type=text]:focus { border-color: var(--brand); }
+  .send {
+    border: 0; background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff;
+    border-radius: 12px; padding: 0 20px; font-size: 15px; cursor: pointer;
+  }
+  .mic { width: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel);
+         font-size: 18px; cursor: pointer; color: var(--text); }
+  .mic.rec { background: #ef4444; color: #fff; border-color: #ef4444; }
+  footer { text-align: center; font-size: 11.5px; color: var(--muted); padding-bottom: 10px; }
+  @media (max-width: 560px) { .msg { max-width: 92%; } header p { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">🎓</div>
+    <div>
+      <h1>Smart Campus &amp; Study Assistant</h1>
+      <p>AI Lab project · Search, D*, Wumpus World, Bayesian Network, HMM, EM</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="icon-btn on" id="speakBtn" title="Read replies aloud">🔊 Voice</button>
+    <button class="icon-btn" id="clearBtn">New chat</button>
+  </header>
+
+  <div class="chips" id="chips"></div>
+  <div id="chat" aria-live="polite"></div>
+
+  <form id="form" autocomplete="off">
+    <button type="button" class="mic" id="mic" title="Speak a command">🎤</button>
+    <input type="text" id="input" placeholder="Type a command, e.g. route from main gate to hostel" autofocus>
+    <button class="send" type="submit">Send</button>
+  </form>
+  <footer>Tip: type <b>help</b> to see everything I can do.</footer>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const chipsEl = document.getElementById('chips');
+let speakOn = true, waiting = false, lastBot = '';
+
+const MAIN_CHIPS = [
+  ['🗺️ Route', 'route from main gate to hostel'],
+  ['⚖️ Compare routes', 'compare routes from medical center to sports ground'],
+  ['📅 Timetable', 'make my study timetable'],
+  ['📈 Will I pass?', 'will i pass'],
+  ['🎯 Check focus', 'check my focus'],
+  ['🚧 Re-plan route', 'reroute from main gate to hostel if library is blocked'],
+  ['👾 Wumpus World', 'play wumpus world'],
+  ['👥 Which group am I?', 'which group am i'],
+  ['🗼 Hanoi', 'play hanoi with 4 disks'],
+  ['🧩 8 Puzzle', 'play 8 puzzle'],
+  ['📚 Syllabus', 'syllabus'],
+  ['🕒 Time', 'time'],
+  ['😄 Joke', 'joke'],
+];
+
+function setChips() {
+  chipsEl.innerHTML = '';
+  const list = !waiting ? MAIN_CHIPS
+    : /yes, no|yes\/no|yes or no/i.test(lastBot) ? [['Yes', 'yes'], ['No', 'no'], ['Skip', 'skip']]
+    : [];
+  for (const [label, cmd] of list) {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.textContent = label;
+    b.onclick = () => send(cmd);
+    chipsEl.appendChild(b);
+  }
+}
+
+function add(cls, text) {
+  const d = document.createElement('div');
+  d.className = cls; d.textContent = text;
+  chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+function addBlock(text) {
+  const p = document.createElement('pre');
+  p.className = 'block'; p.textContent = text;
+  chat.appendChild(p); chat.scrollTop = chat.scrollHeight;
+}
+function addBadge(b) {
+  if (!b) return;
+  const d = document.createElement('div');
+  d.className = 'badge';
+  d.innerHTML = '<span>⚙️</span><b></b><span></span>';
+  d.children[1].textContent = b[0];
+  d.children[2].textContent = '· ' + b[1];
+  chat.appendChild(d);
+}
+
+function speak(text) {
+  if (!speakOn || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+}
+
+async function send(message) {
+  message = (message ?? input.value).trim();
+  if (!message) return;
+  input.value = '';
+  add('msg user', message);
+  const typing = add('typing', 'Thinking…');
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message})
+    });
+    const data = await r.json();
+    typing.remove();
+    addBadge(data.badge);
+    let spoken = [];
+    for (const ev of data.events || []) {
+      if (ev.type === 'block') addBlock(ev.text);
+      else { add('msg bot', ev.text); spoken.push(ev.text); lastBot = ev.text; }
+    }
+    waiting = !!data.waiting;
+    input.placeholder = waiting ? 'Type your answer (yes / no / skip, or a number)'
+                                : 'Type a command, e.g. route from main gate to hostel';
+    setChips();
+    // do not read very long answers (e.g. Wikipedia) twice as fast; just read the last reply
+    if (spoken.length) speak(spoken[spoken.length - 1]);
+  } catch (e) {
+    typing.remove();
+    add('msg bot', 'Cannot reach the assistant server. Is app.py still running?');
+  }
+  input.focus();
+}
+
+document.getElementById('form').addEventListener('submit', e => { e.preventDefault(); send(); });
+
+const speakBtn = document.getElementById('speakBtn');
+speakBtn.onclick = () => {
+  speakOn = !speakOn;
+  speakBtn.classList.toggle('on', speakOn);
+  if (!speakOn) speechSynthesis.cancel();
+};
+
+document.getElementById('clearBtn').onclick = async () => {
+  await fetch('/api/reset', {method: 'POST'});
+  chat.innerHTML = ''; waiting = false; setChips(); hello();
+};
+
+// Voice input through the browser's speech recognition (works in Chrome / Edge / Safari)
+const mic = document.getElementById('mic');
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) {
+  mic.style.display = 'none';
+} else {
+  const rec = new SR();
+  rec.lang = 'en-IN'; rec.interimResults = false;
+  rec.onstart = () => mic.classList.add('rec');
+  rec.onend = () => mic.classList.remove('rec');
+  rec.onresult = e => send(e.results[0][0].transcript);
+  mic.onclick = () => { speechSynthesis.cancel(); try { rec.start(); } catch (_) {} };
+}
+
+async function hello() {
+  try {
+    const r = await fetch('/api/hello'); const d = await r.json();
+    add('msg bot', d.text); speak(d.text);
+  } catch (_) { add('msg bot', 'Cannot reach the assistant server.'); }
+}
+setChips(); hello();
+</script>
+</body>
+</html>
