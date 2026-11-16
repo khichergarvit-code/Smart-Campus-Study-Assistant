@@ -4,7 +4,7 @@
 
 **Submitted by:** Garvit Khicher | Roll No: 2025kuad3029 | Section: D1 (AIDE)
 **Course:** Artificial Intelligence Lab
-**GitHub:** _add your repository link here_
+**GitHub:** https://github.com/khichergarvit-code/Smart-Campus-Study-Assistant
 
 ---
 
